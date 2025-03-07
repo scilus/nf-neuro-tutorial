@@ -9,7 +9,8 @@
     "updateContentCommand": "bash .devcontainer/updateContentCommand.sh",
     "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
     "containerEnv": {
-        "WORKSPACE": "${containerWorkspaceFolder}"
+        "WORKSPACE": "${containerWorkspaceFolder}",
+        "XDG_CONFIG_HOME": "/home/gitpod/.config"
     },
     "features": {
         "ghcr.io/devcontainers/features/git:1": {},
