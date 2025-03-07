@@ -6,18 +6,6 @@ mkdir -p $XDG_CONFIG_HOME/nf-neuro
 touch $XDG_CONFIG_HOME/nf-neuro/.env
 echo "source $XDG_CONFIG_HOME/nf-neuro/.env" >> ~/.bashrc
 
-# Try to download nf-neuro setup with poetry. If it fails, we defer to pip
-{
-    NFNEURO_RAW_REPOSITORY=https://raw.githubusercontent.com/scilus/nf-neuro/main
-    NFCORE_VERSION=2.14.1
-    wget -N $NFNEURO_RAW_REPOSITORY/pyproject.toml \
-            $NFNEURO_RAW_REPOSITORY/poetry.toml \
-            $NFNEURO_RAW_REPOSITORY/poetry.lock
-} || {
-    echo "Failed to download nf-neuro base project configuration. Creating requirements.txt for pip"
-    echo "nf-core==$NFCORE_VERSION" > requirements.txt
-}
-
 # Try to download VSCode settings from nf-neuro
 {
     NFNEURO_RAW_REPOSITORY=https://raw.githubusercontent.com/scilus/nf-neuro/main

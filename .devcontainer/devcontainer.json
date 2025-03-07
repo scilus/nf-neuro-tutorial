@@ -1,10 +1,7 @@
 {
     "name": "prototyping",
     "build": {
-        "dockerfile": "Dockerfile",
-        "args": {
-            "POETRY_VERSION": "1.8.*"
-        }
+        "dockerfile": "Dockerfile"
     },
     "forwardPorts": [3000],
     "initializeCommand": "bash .devcontainer/initializeCommand.sh",
@@ -26,11 +23,6 @@
     },
     "mounts": [
         {
-            "source": "nf-proto-${devcontainerId}-venv",
-            "target": "${containerWorkspaceFolder}/.venv",
-            "type": "volume"
-        },
-        {
             "target": "/tmp",
             "type": "volume"
         },
@@ -50,20 +42,14 @@
                 "python": {
                     "analysis.exclude": [
                         "${containerWorkspaceFolder}/.vscode",
-                        "${containerWorkspaceFolder}/.venv",
-                        "**/__pycache__",
                         "${containerWorkspaceFolder}/.git"
                     ],
                     "analysis.ignore": [
                         "${containerWorkspaceFolder}/.vscode",
-                        "${containerWorkspaceFolder}/.venv",
-                        "**/__pycache__",
                         "${containerWorkspaceFolder}/.git"
                     ],
                     "createEnvironment.trigger": "off",
                     "interpreter.infoVisibility": "always",
-                    "poetryPath": "/root/.local/bin/poetry",
-                    "defaultInterpreterPath": "${containerWorkspaceFolder}/.venv",
                     "terminal.activateEnvironment": true,
                     "terminal.activateEnvInCurrentTerminal": true,
                     "terminal.focusAfterLaunch": true
