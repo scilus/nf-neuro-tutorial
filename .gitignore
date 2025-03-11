@@ -1,0 +1,4 @@
+.nextflow.log*
+.vscode
+.nextflow
+.nf-test.log

@@ -2,7 +2,6 @@
     "name": "nextflow-training",
     "build": { "dockerfile": "Dockerfile", "context": ".." },
     "forwardPorts": [3000],
-    "onCreateCommand": "bash .devcontainer/onCreateCommand.sh",
     "features": {
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "version": "latest"
