@@ -24,7 +24,7 @@
         {
             "target": "/commandhistory",
             "type": "volume",
-            "source": "nf-neuro-tutorial-${devcontainersId}-bashhistory"
+            "source": "nf-neuro-tutorial-${devcontainerId}-bashhistory"
         }
     ],    
     // Configure tool-specific properties.
