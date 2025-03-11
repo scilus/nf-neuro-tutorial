@@ -2,3 +2,4 @@
 .vscode
 .nextflow
 .nf-test.log
+nf-test.config

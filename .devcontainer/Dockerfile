@@ -14,6 +14,7 @@ RUN apt-get update --quiet && \
         curl \
         tree \
         graphviz \
+        vim \
         software-properties-common && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -68,9 +69,9 @@ RUN conda config --add channels bioconda && \
     conda update --quiet --yes --all && \
     conda install --quiet --yes --name base \
         mamba \
-        nextflow \
-        nf-core \
-        nf-test \
+        nextflow=$NXF_VER \
+        nf-core=3.2.0 \
+        nf-test=0.9.2 \
         black \
         prettier \
         pre-commit \
@@ -85,12 +86,8 @@ RUN printf 'unset JAVA_TOOL_OPTIONS\n' >> $HOME/.bashrc
 RUN nextflow self-update && nextflow -version
 
 RUN unset JAVA_TOOL_OPTIONS
+ENV PS1='\[\e[3;36m\]${PWD/*//} ->\[\e[0m\] '
 
-# RUN export PS1='\t -> '
-RUN export PS1='\[\e[3;36m\]${PWD/*//} ->\[\e[0m\] '
-
-RUN export NFNEURO_RAW_REPOSITORY="https://raw.githubusercontent.com/scilus/nf-neuro/main"
-RUN export NFCORE_MODULES_GIT_REMOTE=https://github.com/scilus/nf-neuro.git
-RUN export NFCORE_MODULES_BRANCH=main
-RUN export NFCORE_SUBWORKFLOWS_GIT_REMOTE=https://github.com/scilus/nf-neuro.git
-RUN export NFCORE_SUBWORKFLOWS_BRANCH=main
+# Get history
+RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
+    && echo "$SNIPPET" >> "/root/.bashrc"

@@ -16,7 +16,7 @@ workflow get_data {
 
         input = file(params.input)
         // ** Loading all files. ** //
-        participants_channel = Channel.fromFilePairs("$input/participants.*", size: 2, flat: true)
+        participants_channel = Channel.fromFilePairs("$input/*.*", flat: true)
 
     emit:
         participants = participants_channel

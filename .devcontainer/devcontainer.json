@@ -3,11 +3,15 @@
     "build": { "dockerfile": "Dockerfile", "context": ".." },
     "forwardPorts": [3000],
     "features": {
-        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-            "version": "latest"
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+            "dockerDashComposeVersion": "none",
+            "installDockerComposeSwitch": false
         }
     },
-    "postCreateCommand": "nextflow -version; if [ -z \"$CODESPACES\" ]; then echo \"Devcontainers Development\"; else echo \"Codespaces Development\";  fi",
+    "postCreateCommand": {
+        "identify": "if [ -z \"$CODESPACES\" ]; then echo \"Devcontainers Development\"; else echo \"Codespaces Development\";  fi",
+        "trust": "git config --global --add safe.directory /workspaces"
+    },
     "mounts": [
         {
             "target": "/tmp",
@@ -20,7 +24,7 @@
         {
             "target": "/commandhistory",
             "type": "volume",
-            "source": "bashhistory"
+            "source": "nf-neuro-tutorial-${devcontainersId}-bashhistory"
         }
     ],    
     // Configure tool-specific properties.
@@ -42,6 +46,5 @@
                 "nf-neuro.nf-neuro-extensionpack"
             ]
         }
-    },
-    "remoteUser": "root"
+    }
 }
