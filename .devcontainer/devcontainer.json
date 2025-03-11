@@ -1,64 +1,48 @@
 {
-    "name": "prototyping",
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+    "name": "nextflow-training",
+    "build": { "dockerfile": "Dockerfile", "context": ".." },
     "forwardPorts": [3000],
-    "initializeCommand": "bash .devcontainer/initializeCommand.sh",
     "onCreateCommand": "bash .devcontainer/onCreateCommand.sh",
-    "updateContentCommand": "bash .devcontainer/updateContentCommand.sh",
-    "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
-    "containerEnv": {
-        "WORKSPACE": "${containerWorkspaceFolder}",
-        "XDG_CONFIG_HOME": "/home/gitpod/.config"
-    },
     "features": {
-        "ghcr.io/devcontainers/features/git:1": {},
-        "ghcr.io/devcontainers/features/github-cli:1": {},
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-        "ghcr.io/devcontainers-contrib/features/apt-get-packages:1": {},
-        "ghcr.io/robsyme/features/nextflow:1": {},
-        "ghcr.io/devcontainers-contrib/features/curl-apt-get:1": {},
-        "ghcr.io/devcontainers-contrib/features/tmux-apt-get:1": {},
-        "ghcr.io/devcontainers-contrib/features/wget-apt-get:1": {}
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+            "version": "latest"
+        }
     },
+    "postCreateCommand": "nextflow -version; if [ -z \"$CODESPACES\" ]; then echo \"Devcontainers Development\"; else echo \"Codespaces Development\";  fi",
     "mounts": [
         {
             "target": "/tmp",
             "type": "volume"
         },
         {
-            "source": "nf-proto-${devcontainerId}-profile",
-            "target": "/root",
+            "target": "/root/.vscode-server",
             "type": "volume"
         },
         {
-            "target": "/root/.vscode-server",
-            "type": "volume"
+            "target": "/commandhistory",
+            "type": "volume",
+            "source": "bashhistory"
         }
-    ],
+    ],    
+    // Configure tool-specific properties.
     "customizations": {
+        // Configure properties specific to VS Code.
         "vscode": {
+            // Set *default* container specific settings.json values on container create.
             "settings": {
-                "python": {
-                    "analysis.exclude": [
-                        "${containerWorkspaceFolder}/.vscode",
-                        "${containerWorkspaceFolder}/.git"
-                    ],
-                    "analysis.ignore": [
-                        "${containerWorkspaceFolder}/.vscode",
-                        "${containerWorkspaceFolder}/.git"
-                    ],
-                    "createEnvironment.trigger": "off",
-                    "interpreter.infoVisibility": "always",
-                    "terminal.activateEnvironment": true,
-                    "terminal.activateEnvInCurrentTerminal": true,
-                    "terminal.focusAfterLaunch": true
-                }
+                "python.defaultInterpreterPath": "/opt/conda/bin/python"
             },
-            "extensions": ["nf-neuro.nf-neuro-extensionpack"]
+            // Add the IDs of extensions you want installed when the container is created.
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "nf-core.nf-core-extensionpack", // nf-core recommended extensions
+                "nextflow.nextflow", // Nextflow VS Code extension
+                "codezombiech.gitignore", // Language support for .gitignore files
+                "cssho.vscode-svgviewer", // SVG viewer
+                "nf-neuro.nf-neuro-extensionpack"
+            ]
         }
     },
-    "init": true,
-    "privileged": true
+    "remoteUser": "root"
 }

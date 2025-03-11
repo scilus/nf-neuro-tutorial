@@ -1,5 +1,6 @@
 #!/usr/bin/env nextflow
 
+//include { RECONST_DTIMETRICS } from 'modules/nf-neuro/reconst/dtimetrics/main'
 workflow get_data {
     main:
         if ( !params.input ) {
