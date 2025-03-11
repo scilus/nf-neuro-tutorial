@@ -47,7 +47,6 @@ ENV NFCORE_SUBWORKFLOWS_BRANCH=main
 
 # Install conda
 ENV PATH="/root/miniconda3/bin:${PATH}"
-ARG PATH="/root/miniconda3/bin:${PATH}"
 RUN arch=$(uname -m) && \
     if [ "$arch" = "x86_64" ]; then \
     MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"; \
