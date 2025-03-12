@@ -1,0 +1,26 @@
+{
+  "name": "",
+  "homePage": "",
+  "repos": {
+    "https://github.com/scilus/nf-neuro.git": {
+      "modules": {
+        "nf-neuro": {
+          "reconst/dtimetrics": {
+            "branch": "main",
+            "git_sha": "452075a707a9769b0509fc33a1051e8ba80799bf",
+            "installed_by": ["modules"]
+          }
+        }
+      },
+      "subworkflows": {
+        "nf-neuro": {
+          "load_test_data": {
+            "branch": "main",
+            "git_sha": "a79cb5c9645269db389c563f674b17c5e900a50b",
+            "installed_by": ["subworkflows"]
+          }
+        }
+      }
+    }
+  }
+}
