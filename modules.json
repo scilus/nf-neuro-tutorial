@@ -11,6 +11,15 @@
             "installed_by": ["modules"]
           }
         }
+      },
+      "subworkflows": {
+        "nf-neuro": {
+          "load_test_data": {
+            "branch": "main",
+            "git_sha": "a79cb5c9645269db389c563f674b17c5e900a50b",
+            "installed_by": ["subworkflows"]
+          }
+        }
       }
     }
   }
