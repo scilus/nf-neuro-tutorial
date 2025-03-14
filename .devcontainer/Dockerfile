@@ -69,7 +69,7 @@ RUN conda config --add channels bioconda && \
     conda install --quiet --yes --name base \
         mamba \
         nextflow=$NXF_VER \
-        nf-core=3.2.0 \
+        nf-core=2.14.1 \
         nf-test=0.9.2 \
         black \
         prettier \
