@@ -1,0 +1,14 @@
+{
+    "reconst - stub-run dtimetrics": {
+        "content": [
+            [
+                "versions.yml:md5,c7a6b86e604d3b25340611cec27c758a"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.0",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-03-06T15:57:03.763217558"
+    }
+}
