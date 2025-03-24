@@ -2,6 +2,17 @@
   "name": "",
   "homePage": "",
   "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "multiqc": {
+            "branch": "master",
+            "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
+            "installed_by": ["modules"]
+          }
+        }
+      }
+    },
     "https://github.com/scilus/nf-neuro.git": {
       "modules": {
         "nf-neuro": {
@@ -42,7 +53,7 @@
           },
           "reconst/dtimetrics": {
             "branch": "main",
-            "git_sha": "452075a707a9769b0509fc33a1051e8ba80799bf",
+            "git_sha": "47e91ecc151180b81de0d4945c892bd616a6ad03",
             "installed_by": ["modules"]
           }
         }
