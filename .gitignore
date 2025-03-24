@@ -6,3 +6,5 @@
 tests/.runs/
 work/
 .nf-test/
+result
+.DS_Store
