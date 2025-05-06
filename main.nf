@@ -1,8 +1,9 @@
 #!/usr/bin/env nextflow
 
-include { PREPROC_T1 } from './subworkflows/nf-neuro/preproc_t1/main'
-include { STATS_METRICSINROI } from './modules/local/stats/metricsinrois/main'
-include { PREPROC_DIFF } from './subworkflows/local/preproc_diff/main'
+include { TRACTOFLOW } from './subworkflows/nf-neuro/tractoflow/main'
+include { SEGMENTATION_FSRECONALL } from './modules/nf-neuro/segmentation/fsreconall/main'
+include { REGISTRATION_ANTSAPPLYTRANSFORMS as TRANSFORM_LABELS } from './modules/nf-neuro/registration/antsapplytransforms/main'
+include { CONNECTIVITY_DECOMPOSE } from './modules/nf-neuro/connectivity/decompose/main'
 
 
 workflow get_data {
@@ -19,8 +20,8 @@ workflow get_data {
             log.info "                        |    └-- *t1.nii.gz"
             log.info "                        └-- S2"
             log.info "                             ├-- *dwi.nii.gz"
-            log.info "                             ├-- *bval"
-            log.info "                             ├-- *bvec"
+            log.info "                             ├-- *dwi.bval"
+            log.info "                             ├-- *dwi.bvec"
             log.info "                             └-- *t1.nii.gz"
             log.info ""
             error "Please resubmit your command with the previous file structure."
@@ -28,11 +29,11 @@ workflow get_data {
 
         input = file(params.input)
         // ** Loading DWI files. ** //
-        dwi_channel = Channel.fromFilePairs("$input/**/**/dwi/*dwi.{nii.gz,bval,bvec}", size: 3, flat: true)
+        dwi_channel = Channel.fromFilePairs("$input/**/*dwi.{nii.gz,bval,bvec}", size: 3, flat: true)
             { it.parent.parent.parent.name + "_" + it.parent.parent.name} // Set the subject filename as subjectID + '_' + session.
             .map{ sid, bvals, bvecs, dwi -> [ [id: sid], dwi, bvals, bvecs ] } // Reordering the inputs.
         // ** Loading T1 file. ** //
-        t1_channel = Channel.fromFilePairs("$input/**/**/anat/*T1w.nii.gz", size: 1, flat: true)
+        t1_channel = Channel.fromFilePairs("$input/**/*t1.nii.gz", size: 1, flat: true)
             { it.parent.parent.parent.name + "_" + it.parent.parent.name } // Set the subject filename as subjectID + '_' + session.
             .map{ sid, t1 -> [ [id: sid], t1 ] }
     emit:
@@ -43,14 +44,12 @@ workflow get_data {
 workflow {
     inputs = get_data()
 
-    //Processing DWI
-    PREPROC_DIFF( inputs.dwi )
-
-    // Preprocessing T1 images
-    //inputs.anat.view()
-
-    PREPROC_T1(
-        inputs.anat,
+    TRACTOFLOW(
+        inputs.dwi, // channel : [required] dwi, bval, bvec
+        inputs.anat, // channel : [required] t1
+        Channel.empty(),
+        Channel.empty(),
+        Channel.empty(),
         Channel.empty(),
         Channel.empty(),
         Channel.empty(),
@@ -58,11 +57,4 @@ workflow {
         Channel.empty(),
         Channel.empty()
     )
-
-    // Extract FA value
-     input_extract_metric = PREPROC_T1.out.image_bet
-             .join(PREPROC_DIFF.out.fa)
-             .map{ it }
-
-    STATS_METRICSINROI( input_extract_metric )
 }
