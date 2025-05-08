@@ -1,4 +1,5 @@
 #!/usr/bin/env nextflow
+nextflow.enable.dsl=2
 
 include { TRACTOFLOW } from './subworkflows/nf-neuro/tractoflow/main'
 include { SEGMENTATION_FSRECONALL } from './modules/nf-neuro/segmentation/fsreconall/main'
@@ -30,15 +31,21 @@ workflow get_data {
         input = file(params.input)
         // ** Loading DWI files. ** //
         dwi_channel = Channel.fromFilePairs("$input/**/*dwi.{nii.gz,bval,bvec}", size: 3, flat: true)
-            { it.parent.parent.parent.name + "_" + it.parent.parent.name} // Set the subject filename as subjectID + '_' + session.
+            { it.parent.parent.name + "_" + it.parent.name} // Set the subject filename as subjectID + '_' + session.
             .map{ sid, bvals, bvecs, dwi -> [ [id: sid], dwi, bvals, bvecs ] } // Reordering the inputs.
         // ** Loading T1 file. ** //
         t1_channel = Channel.fromFilePairs("$input/**/*t1.nii.gz", size: 1, flat: true)
-            { it.parent.parent.parent.name + "_" + it.parent.parent.name } // Set the subject filename as subjectID + '_' + session.
+            { it.parent.parent.name + "_" + it.parent.name } // Set the subject filename as subjectID + '_' + session.
             .map{ sid, t1 -> [ [id: sid], t1 ] }
+
+         // ** Fetch license file ** //
+        ch_fs_license = params.fs_license
+            ? Channel.fromPath(params.fs_license, checkIfExists: true, followLinks: true)
+            : Channel.empty().ifEmpty { error "No license file path provided. Please specify the path using --fs_license parameter." }
     emit:
         dwi = dwi_channel
         anat = t1_channel
+        fs_license = ch_fs_license
 }
 
 workflow {
@@ -57,4 +64,9 @@ workflow {
         Channel.empty(),
         Channel.empty()
     )
+
+    ch_anat_license = inputs.anat
+        .combine(inputs.fs_license)
+
+    SEGMENTATION_FSRECONALL(ch_anat_license)
 }
