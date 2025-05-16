@@ -2,9 +2,11 @@
 nextflow.enable.dsl=2
 
 include { TRACTOFLOW } from './subworkflows/nf-neuro/tractoflow/main'
+include { TRACKING_LOCALTRACKING } from './modules/nf-neuro/tracking/localtracking/main'
 
-include { SEGMENTATION_FSRECONALL } from './modules/nf-neuro/segmentation/fsreconall/main'
+include { SEGMENTATION_FSRECONALLCLINICAL } from './modules/nf-neuro/segmentation/fsreconall/main'
 include { GENERATE_LOBES_PARCELLATION } from './modules/local/segmentation/lobes_parcellation/main'
+include { EXTRACT_FSRECONALL_PARCELLATION } from './modules/local/segmentation/fs_utils/main'
 
 include { BETCROP_ANTSBET} from './modules/nf-neuro/betcrop/antsbet/main'
 include { REGISTRATION_ANTS as REGISTER_TO_DWI } from './modules/nf-neuro/registration/ants/main'
@@ -21,6 +23,7 @@ include { REGISTRATION_ANTSAPPLYTRANSFORMS as TRANSFORM_MASK_WM_MNI } from './mo
 
 include { TRACTOGRAM_MATH as CONCATENATE} from './modules/local/tractogram/math/main'
 include { REGISTRATION_TRACTOGRAM as TRANSFORM_TRACTOGRAM_MNI} from './modules/nf-neuro/registration/tractogram/main'
+include { VOLUME_MATH_SINGLE } from './modules/local/volume/math/main'
 
 include { CONNECTIVITY_DECOMPOSE } from './modules/nf-neuro/connectivity/decompose/main'
 include { GENERATE_JUNCTION_SIGNATURES } from './modules/local/connectivity/signatures/main'
@@ -97,14 +100,23 @@ workflow {
     // Somehow Tractoflow needs to have a template with a meta: use combine
     ch_template = inputs.anat
         .combine(inputs.ants_template)
-        .map { id, t1, template ->
+        .map { id, _t1, template ->
             [id, template]
         }
     ch_probability_map = inputs.anat
         .combine(inputs.ants_probability_map)
-        .map { id, t1, probability_map ->
+        .map { id, _t1, probability_map ->
             [id, probability_map]
         }
+
+    // Run Freesurfer on the T1w image
+    ch_anat_license = inputs.anat
+        .combine(inputs.fs_license)
+    SEGMENTATION_FSRECONALLCLINICAL(ch_anat_license)
+    
+    ch_labels = SEGMENTATION_FSRECONALLCLINICAL.out.recon_all_out_folder
+    GENERATE_LOBES_PARCELLATION(ch_labels)
+    EXTRACT_FSRECONALL_PARCELLATION(ch_labels)
 
     TRACTOFLOW(
         inputs.dwi, // channel : [required] dwi, bval, bvec
@@ -112,46 +124,25 @@ workflow {
         Channel.empty(),
         Channel.empty(),
         Channel.empty(),
-        Channel.empty(),
-        Channel.empty(),
+        EXTRACT_FSRECONALL_PARCELLATION.out.aparc_aseg,
+        EXTRACT_FSRECONALL_PARCELLATION.out.wmparc,
         Channel.empty(),
         ch_template, // Provided template (one per project)
         ch_probability_map, // Provided probability map (one per project)
         Channel.empty()
     )
 
-    // Run Freesurfer on the T1w image
-    ch_anat_license = inputs.anat
-        .combine(inputs.fs_license)
-    SEGMENTATION_FSRECONALL(ch_anat_license)
-    
-    ch_labels = SEGMENTATION_FSRECONALL.out.recon_all_out_folder
-    GENERATE_LOBES_PARCELLATION(ch_labels)
-
-    // Since Tractoflow does not output a registration (affine+warp)
-    // from T1w to DWI, we do it again using ANTS.
-    // First we skull strip the T1w image using ANTS.
-    ch_bet_t1 = inputs.anat
-        .combine(inputs.ants_template)
-        .combine(inputs.ants_probability_map)
-        .map { id, t1, template, probability_map ->
-            [id, t1, template, probability_map, [], []]
-        }
-    BETCROP_ANTSBET(ch_bet_t1)
-
-    ch_register_to_dwi = BETCROP_ANTSBET.out.t1
-        .join(TRACTOFLOW.out.t1)
-        .map { id, t1, template ->
-            [id, template, t1, []]
-        }
-    REGISTER_TO_DWI ( ch_register_to_dwi )
+    // Dilate the WM mask to be more generous
+    VOLUME_MATH_SINGLE ( TRACTOFLOW.out.wm_mask )
+    tracking_ch = VOLUME_MATH_SINGLE.out.image
+        .join(TRACTOFLOW.out.fodf)
+        .join(TRACTOFLOW.out.dti_fa)
+    TRACKING_LOCALTRACKING ( tracking_ch )
 
     // Labels (lobes) can now be transformed to DWI space
-    ch_transforms_to_dwi = REGISTER_TO_DWI.out.warp
-        .join(REGISTER_TO_DWI.out.affine)
     ch_ants_apply_labels_to_dwi = GENERATE_LOBES_PARCELLATION.out.labels_dilate
         .join(TRACTOFLOW.out.dti_fa)
-        .join(ch_transforms_to_dwi)
+        .join(TRACTOFLOW.out.anatomical_to_diffusion)
     TRANSFORM_LABELS_TO_DWI ( ch_ants_apply_labels_to_dwi )
     
     // We will do all processing in MNI space, we will use the skull stripped
@@ -196,7 +187,7 @@ workflow {
         .join(ch_transform_to_mni)
     TRANSFORM_IMAGE_AFD_MNI ( ch_ants_apply_image_afd_mni )
 
-    ch_ants_apply_mask_wm_mni = TRACTOFLOW.out.wm_mask
+    ch_ants_apply_mask_wm_mni = VOLUME_MATH_SINGLE.out.image
         .combine(inputs.mni_template)
         .join(ch_transform_to_mni)
     TRANSFORM_MASK_WM_MNI ( ch_ants_apply_mask_wm_mni )

@@ -76,3 +76,44 @@ process SEGMENTATION_FSRECONALL {
     recon-all --help
     """
 }
+
+process SEGMENTATION_FSRECONALLCLINICAL {
+    tag "$meta.id"
+    label 'process_single'
+
+    // Note. Freesurfer is already on Docker. See documentation on
+    // https://hub.docker.com/r/freesurfer/freesurfer
+    container "freesurfer/freesurfer:7.4.1"
+
+    input:
+        tuple val(meta), path(anat), path(fs_license) /* optional, value = [] */
+
+    output:
+        tuple val(meta), path("*__recon_all")   , emit: recon_all_out_folder
+        path "versions.yml"                     , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    # Manage the license. (Save old one if existed.)
+    if [[ ! -f "$fs_license" ]]
+    then
+        echo "License not given in input, or not found. Will probably fail. "
+    else
+        cp "$fs_license" .license
+        here=`pwd`
+        export FS_LICENSE=\$here/.license
+    fi
+    
+    rm ${prefix}__recon_all/ -rf
+    recon-all-clinical.sh $anat ${prefix}__recon_all 1 \${here}
+
+    # Remove the license
+    if [ ! $fs_license = [] ]; then
+        rm .license
+    fi
+    """
+}
