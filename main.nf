@@ -23,7 +23,9 @@ include { REGISTRATION_ANTSAPPLYTRANSFORMS as TRANSFORM_MASK_WM_MNI } from './mo
 
 include { TRACTOGRAM_MATH as CONCATENATE} from './modules/local/tractogram/math/main'
 include { REGISTRATION_TRACTOGRAM as TRANSFORM_TRACTOGRAM_MNI} from './modules/nf-neuro/registration/tractogram/main'
-include { VOLUME_MATH_SINGLE } from './modules/local/volume/math/main'
+include { VOLUME_MATH_SINGLE as VOLUME_DILATE } from './modules/local/volume/math/main'
+include { VOLUME_MATH_DOUBLE as VOLUME_DIFFERENCE } from './modules/local/volume/math/main'
+
 
 include { CONNECTIVITY_DECOMPOSE } from './modules/nf-neuro/connectivity/decompose/main'
 include { GENERATE_JUNCTION_SIGNATURES } from './modules/local/connectivity/signatures/main'
@@ -51,13 +53,17 @@ workflow get_data {
 
         input = file(params.input)
         // ** Loading DWI files. ** //
-        dwi_channel = Channel.fromFilePairs("$input/**/*dwi.{nii.gz,bval,bvec}", size: 3, flat: true)
+        dwi_channel = Channel.fromFilePairs("$input/*/*/*dwi.{nii.gz,bval,bvec}", size: 3, flat: true)
             { it.parent.parent.name + "_" + it.parent.name} // Set the subject filename as subjectID + '_' + session.
             .map{ sid, bvals, bvecs, dwi -> [ [id: sid], dwi, bvals, bvecs ] } // Reordering the inputs.
         // ** Loading T1 file. ** //
-        t1_channel = Channel.fromFilePairs("$input/**/*t1.nii.gz", size: 1, flat: true)
+        t1_channel = Channel.fromFilePairs("$input/*/*/*t1.nii.gz", size: 1, flat: true)
             { it.parent.parent.name + "_" + it.parent.name } // Set the subject filename as subjectID + '_' + session.
             .map{ sid, t1 -> [ [id: sid], t1 ] }
+
+        fs_channel = Channel.fromFilePairs("$input/*/*/freesurfer/", size: 1, flat: true, type: 'dir')
+            { it.parent.parent.name + "_" + it.parent.name } // Set the subject filename as subjectID + '_' + session.
+            .map{ sid, recon -> [ [id: sid], recon ] }
 
          // ** Fetch license file ** //
         ch_fs_license = params.fs_license
@@ -86,6 +92,7 @@ workflow get_data {
     emit:
         dwi = dwi_channel
         anat = t1_channel
+        fs_recon = fs_channel
         fs_license = ch_fs_license
         mni_template = ch_mni_template
         ants_template = ch_ants_template
@@ -110,13 +117,17 @@ workflow {
         }
 
     // Run Freesurfer on the T1w image
-    ch_anat_license = inputs.anat
-        .combine(inputs.fs_license)
-    SEGMENTATION_FSRECONALL(ch_anat_license)
-    
-    ch_labels = SEGMENTATION_FSRECONALL.out.recon_all_out_folder
-    GENERATE_LOBES_PARCELLATION(ch_labels)
-    EXTRACT_FSRECONALL_PARCELLATION(ch_labels)
+    if (params.run_freesurfer) {
+        ch_anat_license = inputs.anat
+            .combine(inputs.fs_license)
+        SEGMENTATION_FSRECONALL(ch_anat_license)
+        ch_recon = SEGMENTATION_FSRECONALL.out.recon_all_out_folder
+    } else {
+        ch_recon = inputs.fs_recon
+    }
+
+    GENERATE_LOBES_PARCELLATION(ch_recon)
+    EXTRACT_FSRECONALL_PARCELLATION(ch_recon)
 
     TRACTOFLOW(
         inputs.dwi, // channel : [required] dwi, bval, bvec
@@ -133,8 +144,12 @@ workflow {
     )
 
     // Dilate the WM mask to be more generous
-    VOLUME_MATH_SINGLE ( TRACTOFLOW.out.wm_mask )
-    tracking_ch = VOLUME_MATH_SINGLE.out.image
+    VOLUME_DILATE ( TRACTOFLOW.out.wm_mask )
+
+    difference_ch = VOLUME_DILATE.out.image
+        .join(TRACTOFLOW.out.csf_mask)
+    VOLUME_DIFFERENCE ( difference_ch )
+    tracking_ch = VOLUME_DIFFERENCE.out.image
         .join(TRACTOFLOW.out.fodf)
         .join(TRACTOFLOW.out.dti_fa)
     TRACKING_LOCALTRACKING ( tracking_ch )
@@ -187,7 +202,7 @@ workflow {
         .join(ch_transform_to_mni)
     TRANSFORM_IMAGE_AFD_MNI ( ch_ants_apply_image_afd_mni )
 
-    ch_ants_apply_mask_wm_mni = VOLUME_MATH_SINGLE.out.image
+    ch_ants_apply_mask_wm_mni = VOLUME_DIFFERENCE.out.image
         .combine(inputs.mni_template)
         .join(ch_transform_to_mni)
     TRANSFORM_MASK_WM_MNI ( ch_ants_apply_mask_wm_mni )
