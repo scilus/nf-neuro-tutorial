@@ -4,6 +4,7 @@ include { SEGMENTATION_FREESURFERSEG } from '../../../modules/nf-neuro/segmentat
 include { SEGMENTATION_SYNTHSEG      } from '../../../modules/nf-neuro/segmentation/synthseg/main'
 
 params.run_synthseg = false
+params.use_freesurferseg = false
 
 workflow ANATOMICAL_SEGMENTATION {
 
@@ -63,17 +64,16 @@ workflow ANATOMICAL_SEGMENTATION {
             volume = Channel.empty()
             qc_score = Channel.empty()
 
+            if ( params.use_freesurferseg ) {
+                // ** Freesurfer segmentation ** //
+                SEGMENTATION_FREESURFERSEG (
+                    ch_freesurferseg
+                        .join(ch_lesion, remainder: true)
+                        .map{ it[0..2] + [it[3] ?: []] }
+                )
+                ch_versions = ch_versions.mix(SEGMENTATION_FREESURFERSEG.out.versions.first())
 
-            // ** Freesurfer segmentation ** //
-            SEGMENTATION_FREESURFERSEG (
-                ch_freesurferseg
-                    .join(ch_lesion, remainder: true)
-                    .map{ it[0..2] + [it[3] ?: []] }
-            )
-            ch_versions = ch_versions.mix(SEGMENTATION_FREESURFERSEG.out.versions.first())
-
-            // ** Setting outputs ** //
-            if ( ch_freesurferseg != null ) {
+                // ** Setting outputs ** //
                 wm_mask = SEGMENTATION_FREESURFERSEG.out.wm_mask
                 gm_mask = SEGMENTATION_FREESURFERSEG.out.gm_mask
                 csf_mask = SEGMENTATION_FREESURFERSEG.out.csf_mask

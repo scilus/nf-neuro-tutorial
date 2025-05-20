@@ -4,7 +4,7 @@ nextflow.enable.dsl=2
 include { TRACTOFLOW } from './subworkflows/nf-neuro/tractoflow/main'
 include { TRACKING_LOCALTRACKING } from './modules/nf-neuro/tracking/localtracking/main'
 
-include { SEGMENTATION_FSRECONALLCLINICAL } from './modules/nf-neuro/segmentation/fsreconall/main'
+include { SEGMENTATION_FSRECONALL } from './modules/nf-neuro/segmentation/fsreconall/main'
 include { GENERATE_LOBES_PARCELLATION } from './modules/local/segmentation/lobes_parcellation/main'
 include { EXTRACT_FSRECONALL_PARCELLATION } from './modules/local/segmentation/fs_utils/main'
 
@@ -112,9 +112,9 @@ workflow {
     // Run Freesurfer on the T1w image
     ch_anat_license = inputs.anat
         .combine(inputs.fs_license)
-    SEGMENTATION_FSRECONALLCLINICAL(ch_anat_license)
+    SEGMENTATION_FSRECONALL(ch_anat_license)
     
-    ch_labels = SEGMENTATION_FSRECONALLCLINICAL.out.recon_all_out_folder
+    ch_labels = SEGMENTATION_FSRECONALL.out.recon_all_out_folder
     GENERATE_LOBES_PARCELLATION(ch_labels)
     EXTRACT_FSRECONALL_PARCELLATION(ch_labels)
 

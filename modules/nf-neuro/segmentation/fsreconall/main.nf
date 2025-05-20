@@ -32,6 +32,8 @@ process SEGMENTATION_FSRECONALL {
         export FS_LICENSE=\$here/.license
     fi
 
+    rm ${prefix}__recon_all/ -rf
+
     if [ -z $dev_debug_test ]
     then
         # Run the main script
@@ -97,6 +99,7 @@ process SEGMENTATION_FSRECONALLCLINICAL {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def nb_processes = task.ext.nb_processes ?: 1 
     """
     # Manage the license. (Save old one if existed.)
     if [[ ! -f "$fs_license" ]]
@@ -109,7 +112,7 @@ process SEGMENTATION_FSRECONALLCLINICAL {
     fi
     
     rm ${prefix}__recon_all/ -rf
-    recon-all-clinical.sh $anat ${prefix}__recon_all 1 \${here}
+    recon-all-clinical.sh $anat ${prefix}__recon_all ${nb_processes} \${here}
 
     # Remove the license
     if [ ! $fs_license = [] ]; then

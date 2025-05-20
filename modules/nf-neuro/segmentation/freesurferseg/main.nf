@@ -72,9 +72,9 @@ process SEGMENTATION_FREESURFERSEG {
         ${prefix}__mask_nuclei_bin.nii.gz -f
     scil_volume_math.py lower_threshold mask_csf_1_m.nii.gz 0.1\
         ${prefix}__mask_csf.nii.gz -f
-    scil_volume_math.py addition ${prefix}__mask_wm_bin.nii.gz\
+    scil_volume_math.py union ${prefix}__mask_wm_bin.nii.gz\
                                 ${prefix}__mask_nuclei_bin.nii.gz\
-                                ${prefix}__mask_wm.nii.gz --data_type int16
+                                ${prefix}__mask_wm.nii.gz --data_type uint8
 
     scil_volume_math.py convert ${prefix}__mask_wm.nii.gz ${prefix}__mask_wm.nii.gz --data_type uint8 -f
     scil_volume_math.py convert ${prefix}__mask_gm.nii.gz ${prefix}__mask_gm.nii.gz --data_type uint8 -f
