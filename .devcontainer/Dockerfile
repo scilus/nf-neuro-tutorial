@@ -49,9 +49,9 @@ ENV NFCORE_SUBWORKFLOWS_BRANCH=main
 ENV PATH="/root/miniconda3/bin:${PATH}"
 RUN arch=$(uname -m) && \
     if [ "$arch" = "x86_64" ]; then \
-    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"; \
+    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-py312_25.3.1-1-Linux-x86_64.sh"; \
     elif [ "$arch" = "aarch64" ]; then \
-    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-aarch64.sh"; \
+    MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-py312_25.3.1-1-Linux-aarch64.sh"; \
     else \
     echo "Unsupported architecture: $arch"; \
     exit 1; \
