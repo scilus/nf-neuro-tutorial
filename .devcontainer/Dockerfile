@@ -62,9 +62,11 @@ RUN arch=$(uname -m) && \
     rm -f miniconda.sh
 
 # Install nextflow, nf-core, Mamba, and pytest-workflow
-RUN conda config --add channels bioconda && \
+RUN conda install --name=base conda-anaconda-tos && \
+    conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda config --set channel_priority strict && \
+    conda tos accept && \
     conda update --quiet --yes --all && \
     conda install --quiet --yes --name base \
         mamba \
@@ -90,3 +92,6 @@ ENV PS1='\[\e[3;36m\]${PWD/*//} ->\[\e[0m\] '
 # Get history
 RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
     && echo "$SNIPPET" >> "/root/.bashrc"
+
+# Add tos disclaimer to bashrc as trap so it runs at the end of the sourcing process
+ADD .devcontainer/bash_profile.sh /root/.bash_profile
