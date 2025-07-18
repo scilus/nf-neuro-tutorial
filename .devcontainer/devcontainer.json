@@ -33,7 +33,18 @@
         "vscode": {
             // Set *default* container specific settings.json values on container create.
             "settings": {
-                "python.defaultInterpreterPath": "/opt/conda/bin/python"
+                "python.defaultInterpreterPath": "/opt/conda/bin/python",
+                "terminal.integrated.defaultProfile.linux": "devcontainer-bash",
+                "terminal.integrated.profiles.linux": {
+                    "devcontainer-bash": {
+                        "path": "bash",
+                        "icon": "terminal-bash",
+                        "args": [
+                            "--init-file",
+                            "/root/.bash_profile"
+                        ]
+                    }
+                }
             },
             // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
